@@ -1,184 +1,91 @@
 import React, { useState } from "react";
-import "./PGDetailsPage.css";
-import { Carousel } from "react-carousel-minimal";
-import SharingOptions from "./sharingOptions";
-import StarRating from "./StarRating";
-import defaultPic from "./images/default.jpg";
+import hero_img from "./images/hero2.jpg";
+import { useNavigate } from "react-router-dom";
+import "./header.css";
+import { allPgs } from "./../../api";
+import CitySuggestList from "./citySuggestList";
+import swal from "sweetalert";
 
-// const share = [
-//   { occupancy: 1, price: 8000, ac: false },
-//   { occupancy: 2, price: 7000, ac: true },
-//   { occupancy: 3, price: 6000, ac: false },
-//   { occupancy: 4, price: 5000, ac: true },
-//   { occupancy: 5, price: 4000, ac: true },
-// ];
+function Header() {
+  let navigate = useNavigate();
 
-function Header({ headerDetails }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [keyword, setKeyword] = useState("");
 
-  const handleToggle = () => {
-    setIsExpanded(!isExpanded);
-  };
+  const searchSubmitHandler = async (e) => {
+    e.preventDefault();
+    let loadingOverlay = document.querySelector(".loading-overlay");
+    // let errorMessage = document.querySelector(".error-msg");
 
-  const readMoreOrNot = (text, maxLength) => {
-    if (text.length <= maxLength || isExpanded) {
-      return text;
+    loadingOverlay.style.display = "block";
+
+    const response = await allPgs({ city: keyword.trim().toLowerCase() });
+    loadingOverlay.style.display = "none";
+
+    if (response.status === "success") {
+      navigate("/listedpg", {
+        state: [response.data.pgs, { city: keyword.trim() }],
+      });
+      window.scrollTo(0, 0);
+    } else {
+      // errorMessage.textContent = response.error;
+      // errorMessage.style.display = "block";
+      // setTimeout(function () {
+      //   errorMessage.style.display = "none";
+      // }, 2000);
+      swal("Error!", response.error);
     }
-
-    return text.slice(0, maxLength);
   };
-  const pgTypeDisplayName = {
-    male: "Male",
-    female: "Female",
-    coLiving: "Co-Living",
-  };
-  const data = [];
-  headerDetails.images.forEach((el) => data.push({ image: el }));
-  if (data.length === 0) {
-    data.push({ image: defaultPic });
+  const [navShow, setNavShow] = useState(false);
+  if (navShow) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "initial";
   }
-  const slideNumberStyle = {
-    fontSize: "20px",
-    fontWeight: "bold",
-  };
-  return (
-    <>
-      <div className="image-details-section">
-        <div className="">
-          <div className="pg-details-container">
-            <div className="App">
-              <div>
-                <Carousel
-                  data={data}
-                  // time={2000}
-                  width="600px"
-                  // height="400px"
-                  radius="10px"
-                  slideNumber={data.length > 1}
-                  slideNumberStyle={slideNumberStyle}
-                  automatic={data.length > 1}
-                  dots={data.length > 1}
-                  pauseIconColor="white"
-                  pauseIconSize="40px"
-                  slideBackgroundColor="black"
-                  slideImageFit="contain"
-                  thumbnails={data.length > 1}
-                  thumbnailWidth="100px"
-                  style={{
-                    Width: "700px",
-                    Height: "500px",
-                    margin: "20px 40px 100px 40px",
-                  }}
-                />
-              </div>
-            </div>
-            <div className="pg-description">
-              <h2 className="pg-name ff_space">{headerDetails.name}</h2>
-              <div className=" ff_space grey  mt-3 align-items-center">
-                <h5>About The property</h5>
-                {readMoreOrNot(headerDetails.description, 154)}
-                <button className="read-more-btn" onClick={handleToggle}>
-                  {headerDetails.description.length > 154 &&
-                    (isExpanded ? "Read Less" : "...Read More")}
-                </button>
-              </div>
-              <div className=" ff_space grey  mt-3 align-items-center">
-                <h5>Address</h5>
-                <p>
-                  {headerDetails.address.locality}, {headerDetails.address.city}{" "}
-                  ({headerDetails.address.pincode})
-                </p>
-              </div>
 
-              <div className=" d-flex mt-3 align-items-center">
-                <h5 className="fs_sm">PG Type:</h5>
-                <p className=" pg_type ff_space fw_600 text_gray">
-                  {pgTypeDisplayName[headerDetails.pgType]}
-                </p>
-              </div>
-              <div className="d-flex mt-2 align-items-center">
-                <h5 className="fs_sm">Ratings : </h5>
-                <StarRating rating={headerDetails.ratingsAverage} />
-              </div>
+  return (
+    <header>
+      <section className="container py-5">
+        <div className="row flex-column-reverse flex-lg-row align-items-center">
+          <div className="col-lg-6">
+            <h1 className="ff_space fw_500 fs_xxl heading1">
+              Find Your Second Home !
+            </h1>
+            <p className="ff_space fw_400 fs_sm blk_clr opacity-75 mb-4 mb-sm-5 col-10">
+              Searching for the perfect PG? Look no further - you've landed in
+              the right spot.
+            </p>
+            <div className="d-flex align-items-center">
+              <form
+                autoComplete="off"
+                className="searchBox gap-3 ms-0"
+                onSubmit={searchSubmitHandler}
+              >
+                <input
+                  id="input"
+                  className="main-search"
+                  type="text"
+                  placeholder="Enter city ..."
+                  onChange={(e) => setKeyword(e.target.value)}
+                  list="cityNames"
+                />
+                {keyword !== "" && <CitySuggestList />}
+                <div className='"ps-sm-2 col-lg-5  text-center ms-0'>
+                  <input
+                    className="d-inline-block searchBtn ff_space fw_700 fs_sm text-nowrap ms-0 w-100"
+                    type="submit"
+                    value="Search"
+                  />
+                </div>
+              </form>
             </div>
           </div>
+
+          <div className="col-lg-6">
+            <img className="w-100 border-hero" src={hero_img} alt="hero_img" />
+          </div>
         </div>
-      </div>
-      <hr className="pgPagehr"></hr>
-      <div className="sharing-container">
-        <div className="sharing-section">
-          <h2 className="sharing-heading fs_xl py-2">Occupancy Options</h2>
-          <SharingOptions options={headerDetails.sharing} />
-        </div>
-      </div>
-    </>
-    // <div className="container">
-    //   <div className="image-details-section">
-    //     <div className="pg-details-container">
-    //       <div className="App">
-    //         <div>
-    //           <Carousel
-    //             data={data}
-    //             // time={2000}
-    //             // width="600px"
-    //             // height="400px"
-    //             radius="10px"
-    //             slideNumber={data.length > 1}
-    //             slideNumberStyle={slideNumberStyle}
-    //             automatic={data.length > 1}
-    //             dots={data.length > 1}
-    //             pauseIconColor="white"
-    //             pauseIconSize="40px"
-    //             slideBackgroundColor="black"
-    //             slideImageFit="contain"
-    //             thumbnails={data.length > 1}
-    //             thumbnailWidth="100px"
-    //             style={{
-    //               Width: "700px",
-    //               Height: "500px",
-    //               margin: "20px 40px 100px 40px",
-    //             }}
-    //           />
-    //         </div>
-    //       </div>
-    //       <div className="pg-description">
-    //         <h2 className="pg-name ff_space">{headerDetails.name}</h2>
-    //         <div className=" ff_space grey  mt-3 align-items-center">
-    //           <h5>About The property</h5>
-    //           {headerDetails.description}
-    //         </div>
-    //         <div className=" ff_space grey  mt-3 align-items-center">
-    //           <h5>Address</h5>
-    //           <p>
-    //             {headerDetails.address.locality}, {headerDetails.address.city} (
-    //             {headerDetails.address.pincode})
-    //           </p>
-
-    //         </div>
-
-    //         <div className=" d-flex mt-3 align-items-center">
-    //           <h5 className="fs_sm">PG Type:</h5>
-    //           <p className=" pg_type ff_space fw_600 text_gray">
-    //             {pgTypeDisplayName[headerDetails.pgType]}
-    //           </p>
-    //         </div>
-    //         <div className="d-flex mt-2 align-items-center">
-    //           <h5 className="fs_sm">Ratings:</h5>
-    //           <img className="ms-3" src={stars_5} alt="stars_5" />
-    //         </div>
-    //       </div>
-    //     </div>
-    //   </div>
-
-    //   {/* *************************************************************************************************************************************** */}
-    //   <div className="container sharing-container">
-    //     <div className="sharing-section">
-    //       <h2 className="sharing-heading fs_xl py-2">Occupancy Options : </h2>
-    //       <SharingOptions options={share} />
-    //     </div>
-    //   </div>
-
-    // </div>
+      </section>
+    </header>
   );
 }
 
